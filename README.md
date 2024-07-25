@@ -15,13 +15,13 @@
 
 ## Introduction
 
-The Castle API Endpoint Tester is a web-based application designed to interact with and control Just Add Power audio receivers. This tool provides a user-friendly interface for managing multiple audio receivers, allowing users to adjust volume levels and select audio channels for each device. The application communicates with the receivers using a RESTful API, making it easy to integrate with existing audio systems.
+The japcontrols is a web-based application designed to interact with and control Just Add Power audio receivers. This tool provides a user-friendly interface for managing multiple audio receivers, allowing users to adjust volume levels and select audio channels for each device. The application communicates with the receivers using a RESTful API, making it easy to integrate with existing audio systems.
 
 This project is particularly useful for any venue where multiple audio zones need to be controlled from a central interface. It offers a simple yet powerful way to manage audio settings across multiple devices simultaneously.
 
 ## Features
 
-- **Multi-Device Management**: Control multiple Castle audio receivers from a single interface.
+- **Multi-Device Management**: Control multiple Just Add Power audio receivers from a single interface.
 - **Volume Control**: Adjust the volume of each receiver individually.
 - **Channel Selection**: Choose the active audio channel for each receiver.
 - **Real-Time Updates**: The interface reflects the current state of each receiver, including volume levels and active channels.
@@ -144,12 +144,5 @@ Contributions to the Castle API Endpoint Tester are welcome! Please follow these
 4. Push your changes to your fork.
 5. Submit a pull request with a detailed description of your changes.
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-For additional support or inquiries, please open an issue on the GitHub repository or contact the project maintainers.
 
 
