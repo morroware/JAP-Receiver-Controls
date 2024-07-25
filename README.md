@@ -15,7 +15,7 @@
 
 ## Introduction
 
-The japcontrols is a web-based application designed to interact with and control Just Add Power audio receivers. This tool provides a user-friendly interface for managing multiple audio receivers, allowing users to adjust volume levels and select audio channels for each device. The application communicates with the receivers using a RESTful API, making it easy to integrate with existing audio systems.
+Japcontrols is a web-based application designed to interact with and control Just Add Power audio receivers. This tool provides a user-friendly interface for managing multiple audio receivers, allowing users to adjust volume levels and select audio channels for each device. The application communicates with the receivers using a RESTful API, making it easy to integrate with existing audio systems.
 
 This project is particularly useful for any venue where multiple audio zones need to be controlled from a central interface. It offers a simple yet powerful way to manage audio settings across multiple devices simultaneously.
 
