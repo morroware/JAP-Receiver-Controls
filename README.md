@@ -1,4 +1,4 @@
-# Castle API Endpoint Tester
+# JAPcontrols
 
 ## Table of Contents
 1. [Introduction](#introduction)
