@@ -1,231 +1,284 @@
 <?php
 /**
- * Utility functions for the Castle AV Control System
+ * Castle AV Controls - Main Script
  * 
- * This file contains all the necessary utility functions for interacting with
- * Just Add Power Device APIs and generating HTML forms for the user interface. It provides
- * a set of reusable functions to handle API calls, retrieve current device settings,
- * generate HTML forms, sanitize user input, and log messages.
+ * This script provides a user interface for controlling multiple music receivers
+ * in the Castle Bowling and Rink facility. It allows users to select channels
+ * and adjust volumes for each receiver.
  *
- * @author Seth Morrow
+ * @Seth Morrow
  * @version 0.01.5
  */
 
-/**
- * Function to handle API calls to the device
- * 
- * This function constructs and executes a cURL request to interact with the Castle API.
- * It supports various HTTP methods and can send data with the request if needed.
- * 
- * @param string $method - The HTTP method to be used for the API call (e.g., GET, POST)
- * @param string $deviceIp - The IP address of the device to interact with
- * @param string $endpoint - The specific API endpoint to call (e.g., 'details/channel')
- * @param mixed $data - Optional data to send with the API request (default is null)
- * @return string - The response from the API call as a string
- * @throws Exception if the API call fails due to cURL errors or non-200 HTTP responses
- */
-function makeApiCall($method, $deviceIp, $endpoint, $data = null) {
-    // Construct the full API URL
-    $apiUrl = 'http://' . $deviceIp . '/cgi-bin/api/' . $endpoint;
-    
-    // Initialize cURL session
-    $ch = curl_init($apiUrl);
-    
-    // Set the HTTP method for the request
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+// Enable error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-    // If data is provided, add it to the request
-    if ($data !== null) {
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/plain'));
-    }
+// Start output buffering to prevent any unwanted output
+ob_start();
 
-    // Set options to return the response as a string and set a timeout
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10-second timeout
+// Start the session to handle page reloads
+session_start();
 
-    // Execute the cURL request
-    $result = curl_exec($ch);
+// Initialize $postResponse
+$postResponse = '';
 
-    // Check for cURL errors
-    if ($result === false) {
-        throw new Exception('cURL error: ' . curl_error($ch));
-    }
+// Include configuration and utility files
+$configFile = __DIR__ . '/config.php';
+$utilsFile = __DIR__ . '/utils.php';
 
-    // Get the HTTP response code
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    
-    // Close the cURL session
-    curl_close($ch);
-
-    // Check for HTTP errors (4xx or 5xx responses)
-    if ($httpCode >= 400) {
-        throw new Exception('HTTP error: ' . $httpCode);
-    }
-
-    return $result;
+if (!file_exists($configFile) || !file_exists($utilsFile)) {
+    die("Error: Required files not found. Please ensure config.php and utils.php exist in the same directory as this script.");
 }
 
-/**
- * Function to get the current volume setting from a device
- * 
- * This function retrieves the current volume setting from a specified device
- * using the Castle API. It handles potential errors and provides a safe default.
- * 
- * @param string $deviceIp - The IP address of the device
- * @return int - The current volume level, defaulting to 0 if not set or in case of an error
- */
-function getCurrentVolume($deviceIp) {
-    try {
-        // Make an API call to get the current volume
-        $response = makeApiCall('GET', $deviceIp, 'details/audio/stereo/volume');
-        
-        // Parse the JSON response
-        $data = json_decode($response, true);
-        
-        // Extract the volume value, defaulting to 0 if not set
-        return isset($data['data']) ? intval($data['data']) : 0;
-    } catch (Exception $e) {
-        // Log the error and return a safe default value
-        error_log('Error getting current volume: ' . $e->getMessage());
-        return 0;
+require_once $configFile;
+require_once $utilsFile;
+
+// Verify that the required functions are available
+if (!function_exists('generateReceiverForm') || !function_exists('getCurrentChannel')) {
+    die("Error: Required functions not found. Please check utils.php.");
+}
+
+// Check if required variables are set in config.php
+if (!isset($RECEIVERS) || !isset($MAX_CHANNELS) || !isset($MIN_VOLUME) || !isset($MAX_VOLUME) || !isset($VOLUME_STEP)) {
+    die("Error: Required configuration variables are not set. Please check config.php.");
+}
+
+// Check if the page should be reloaded after a POST request
+if (isset($_SESSION['reload']) && $_SESSION['reload'] === true) {
+    $_SESSION['reload'] = false;
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate and sanitize input
+    $selectedChannel = sanitizeInput($_POST['channel'], 'int', ['min' => 1, 'max' => $MAX_CHANNELS]);
+    $selectedVolume = sanitizeInput($_POST['volume'], 'int', ['min' => $MIN_VOLUME, 'max' => $MAX_VOLUME]);
+    $deviceIp = sanitizeInput($_POST['receiver_ip'], 'ip');
+
+    if ($selectedChannel && $selectedVolume && $deviceIp) {
+        try {
+            $channelResponse = makeApiCall('POST', $deviceIp, 'command/channel', $selectedChannel);
+            $volumeResponse = makeApiCall('POST', $deviceIp, 'command/audio/stereo/volume', $selectedVolume);
+
+            $postResponse .= "<h3>POST Responses:</h3>";
+            $postResponse .= "<pre>Channel: " . htmlspecialchars($channelResponse) . "</pre>";
+            $postResponse .= "<pre>Volume: " . htmlspecialchars($volumeResponse) . "</pre>";
+
+            $_SESSION['reload'] = true;
+            $postResponse .= "<script>setTimeout(function() { window.location.href = window.location.href; }, 3000);</script>";
+        } catch (Exception $e) {
+            $postResponse .= "<h3>Error:</h3><pre>" . htmlspecialchars($e->getMessage()) . "</pre>";
+            logMessage("Error setting channel/volume: " . $e->getMessage(), 'error');
+        }
+    } else {
+        $postResponse .= "<h3>Error:</h3><pre>Invalid input data.</pre>";
+        logMessage("Invalid input data received in POST request", 'error');
     }
 }
 
-/**
- * Function to get the current channel setting from a device
- * 
- * This function retrieves the current channel setting from a specified device
- * using the Castle API. It includes debug logging and error handling.
- * 
- * @param string $deviceIp - The IP address of the device
- * @return int - The current channel number, defaulting to 1 if not set or in case of an error
- */
-function getCurrentChannel($deviceIp) {
-    try {
-        // Make an API call to get the current channel
-        $response = makeApiCall('GET', $deviceIp, 'details/channel');
-        
-        // Parse the JSON response
-        $data = json_decode($response, true);
-        
-        // Extract the channel value, defaulting to 1 if not set
-        $channel = isset($data['data']) ? intval($data['data']) : 1;
-        
-        // Debug logging
-        error_log("getCurrentChannel for $deviceIp: Raw response: " . print_r($response, true));
-        error_log("getCurrentChannel for $deviceIp: Parsed channel: $channel");
-        
-        return $channel;
-    } catch (Exception $e) {
-        // Log the error and return a safe default value
-        error_log('Error getting current channel: ' . $e->getMessage());
-        return 1;
-    }
-}
-
-/**
- * Function to generate the HTML for a receiver form
- * 
- * This function creates an HTML form for controlling a specific receiver,
- * including channel selection and volume control.
- * 
- * @param string $receiverName - The name of the receiver
- * @param string $deviceIp - The IP address of the receiver
- * @param int $maxChannels - The maximum number of channels
- * @param int $minVolume - The minimum volume level
- * @param int $maxVolume - The maximum volume level
- * @param int $volumeStep - The step size for the volume slider
- * @return string - The HTML for the receiver form
- */
-function generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume, $maxVolume, $volumeStep) {
-    // Get current settings for the receiver
-    $currentVolume = getCurrentVolume($deviceIp);
-    $currentChannel = getCurrentChannel($deviceIp);
-    
-    // Debug logging
-    error_log("generateReceiverForm for $receiverName ($deviceIp): Current Channel: $currentChannel, Current Volume: $currentVolume");
-    
-    // Start building the HTML for the form
-    $html = "<div class='receiver'>";
-    $html .= "<form method='POST'>";
-    $html .= "<button type='button'>" . htmlspecialchars($receiverName) . "</button>";
-    
-    // Generate channel selection dropdown
-    $html .= "<select id='channel_" . htmlspecialchars($receiverName) . "' name='channel'>";
-    for ($channel = 1; $channel <= $maxChannels; $channel++) {
-        $selected = ($channel == $currentChannel) ? ' selected' : '';
-        $html .= "<option value='$channel'$selected>Channel $channel</option>";
-    }
-    $html .= "</select>";
-    
-    // Generate volume slider
-    $html .= "<div class='slider-label'>Volume: $currentVolume</div>";
-    $html .= "<input type='range' name='volume' min='$minVolume' max='$maxVolume' step='$volumeStep' value='$currentVolume' oninput='updateVolumeLabel(this)'>";
-    
-    // Add hidden input for receiver IP and submit button
-    $html .= "<input type='hidden' name='receiver_ip' value='" . htmlspecialchars($deviceIp) . "'>";
-    $html .= "<button type='submit'>Set Channel & Volume</button>";
-    $html .= "</form>";
-    $html .= "</div>";
-    
-    return $html;
-}
-
-/**
- * Function to sanitize and validate input data
- * 
- * This function sanitizes and validates various types of input data,
- * providing type-specific validation and optional range checking for integers.
- * 
- * @param mixed $data - The input data to sanitize
- * @param string $type - The type of data (e.g., 'int', 'ip')
- * @param array $options - Additional options for validation (e.g., min, max for integers)
- * @return mixed - The sanitized data, or null if invalid
- */
-function sanitizeInput($data, $type, $options = []) {
-    switch ($type) {
-        case 'int':
-            // Validate and sanitize integer input, with optional range checking
-            $sanitized = filter_var($data, FILTER_VALIDATE_INT, [
-                'options' => [
-                    'min_range' => $options['min'] ?? PHP_INT_MIN,
-                    'max_range' => $options['max'] ?? PHP_INT_MAX
-                ]
-            ]);
-            break;
-        case 'ip':
-            // Validate and sanitize IP address input
-            $sanitized = filter_var($data, FILTER_VALIDATE_IP);
-            break;
-        default:
-            // For unsupported types, return null
-            $sanitized = null;
-    }
-    // Return the sanitized value if valid, or null if invalid
-    return $sanitized !== false ? $sanitized : null;
-}
-
-/**
- * Function to log errors or important events
- * 
- * This function writes log messages to a file, including a timestamp and log level.
- * 
- * @param string $message - The message to log
- * @param string $level - The log level (e.g., 'error', 'info')
- */
-function logMessage($message, $level = 'info') {
-    // Define the log file path
-    $logFile = __DIR__ . '/app.log';
-    
-    // Get the current timestamp
-    $timestamp = date('Y-m-d H:i:s');
-    
-    // Format the log message
-    $formattedMessage = "[$timestamp] [$level] $message" . PHP_EOL;
-    
-    // Append the message to the log file
-    file_put_contents($logFile, $formattedMessage, FILE_APPEND);
-}
-
+// Clear the output buffer and start the HTML output
+ob_end_clean();
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Castle AV Controls</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --surface-color: #1e1e1e;
+            --error-color: #cf6679;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .receivers-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .receiver {
+            background-color: var(--surface-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .receiver:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .receiver form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: var(--bg-color);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #04ebd2;
+        }
+
+        .receiver select, .receiver input[type='range'] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+        }
+
+        .receiver select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23bb86fc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+            padding-right: 40px;
+        }
+
+        .receiver .slider-label {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #333;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .post-response {
+            background-color: var(--surface-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .post-response h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .post-response pre {
+            background-color: var(--bg-color);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .receiver {
+                padding: 15px;
+            }
+        }
+    </style>
+    <script>
+        function updateVolumeLabel(slider) {
+            var label = slider.parentElement.querySelector('.slider-label');
+            label.textContent = 'Volume: ' + slider.value;
+        }
+    </script>
+</head>
+<body>
+    <h1>Castle Bowling and Rink Music Control</h1>
+    <div class="receivers-wrapper">
+        <?php
+        // Generate and output the receiver forms
+        foreach ($RECEIVERS as $receiverName => $deviceIp) {
+            try {
+                echo generateReceiverForm($receiverName, $deviceIp, $MAX_CHANNELS, $MIN_VOLUME, $MAX_VOLUME, $VOLUME_STEP);
+            } catch (Exception $e) {
+                echo "<div class='receiver'><p>Error generating form for {$receiverName}: {$e->getMessage()}</p></div>";
+                logMessage("Error generating form for {$receiverName}: " . $e->getMessage(), 'error');
+            }
+        }
+        ?>
+    </div>
+    <?php
+    // Output any POST response messages
+    if (!empty($postResponse)) {
+        echo "<div class='post-response'>{$postResponse}</div>";
+    }
+    ?>
+</body>
+</html>
