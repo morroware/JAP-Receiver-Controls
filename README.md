@@ -1,63 +1,155 @@
-# Castle Audio/Visual Control System
+# Castle API Endpoint Tester
 
-The Castle Audio/Visual Control System is a web-based application designed to manage audio and video playback across multiple zones in a castle or similar large venue. This intuitive interface allows staff to easily control audio channels, volume levels, and HDMI signal routing using Just Add Power devices.
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Features](#features)
+3. [Requirements](#requirements)
+4. [Installation](#installation)
+5. [Configuration](#configuration)
+6. [Usage](#usage)
+7. [File Structure](#file-structure)
+8. [Function Documentation](#function-documentation)
+9. [Troubleshooting](#troubleshooting)
+10. [Contributing](#contributing)
+11. [License](#license)
+
+## Introduction
+
+The Castle API Endpoint Tester is a web-based application designed to interact with and control Just Add Power audio receivers. This tool provides a user-friendly interface for managing multiple audio receivers, allowing users to adjust volume levels and select audio channels for each device. The application communicates with the receivers using a RESTful API, making it easy to integrate with existing audio systems.
+
+This project is particularly useful for any venue where multiple audio zones need to be controlled from a central interface. It offers a simple yet powerful way to manage audio settings across multiple devices simultaneously.
 
 ## Features
 
-- Control audio and video for multiple zones
-- Select from 4 different audio/video channels for each zone
-- Adjust volume levels with an easy-to-use slider
-- Compatible with Just Add Power HDMI transmitters and receivers for video routing
-- Responsive design for various screen sizes
-- Modern, dark-themed user interface
+- **Multi-Device Management**: Control multiple Castle audio receivers from a single interface.
+- **Volume Control**: Adjust the volume of each receiver individually.
+- **Channel Selection**: Choose the active audio channel for each receiver.
+- **Real-Time Updates**: The interface reflects the current state of each receiver, including volume levels and active channels.
+- **Error Handling**: Robust error handling ensures the application remains functional even if a device is unresponsive.
+- **Logging**: Comprehensive logging system for tracking operations and troubleshooting.
+- **Security**: Input sanitization to prevent injection attacks and ensure data integrity.
 
-## Technology Stack
+## Requirements
 
-- PHP: Backend logic
-- HTML5: Structure
-- CSS3: Styling (with custom properties for theming)
-- JavaScript: Interactive elements
+- PHP 7.0 or higher
+- Web server (e.g., Apache, Nginx)
+- cURL PHP extension enabled
+- Network access to Just Add Power audio receivers
 
-## Setup
+## Installation
 
-1. Clone this repository to your web server.
-2. Ensure PHP is installed and configured on your server.
-3. Update the `config.php` file (not provided in the current code snippet) with the correct IP addresses for your audio receivers and Just Add Power devices.
-4. Access the application through your web browser.
+1. Clone this repository to your web server's document root:
+   ```
+   git clone https://github.com/morroware/japcontrols.git
+   ```
+
+2. Ensure that the web server has write permissions for the log file:
+   ```
+   chmod 666 /path/to/japcontrols/app.log
+   ```
+
+3. Configure your web server to serve the project directory.
+
+## Configuration
+
+1. Open `config.php` in a text editor.
+2. Modify the `$RECEIVERS` array to include your Just Add Power audio receivers:
+   ```php
+   $RECEIVERS = array(
+       "Bowling Alley" => "192.168.1.100",
+       "Main Rink" => "192.168.1.101",
+       "Cafe Area" => "192.168.1.102",
+   );
+   ```
+3. Adjust other configuration variables as needed:
+   ```php
+   $MAX_VOLUME = 100;
+   $MIN_VOLUME = 0;
+   $VOLUME_STEP = 1;
+   $MAX_CHANNELS = 4;
+   ```
 
 ## Usage
 
-1. Open the application in a web browser.
-2. For each zone:
-   - Select the desired audio channel from the dropdown menu.
-   - Adjust the volume using the slider.
-   - Click "Set Channel & Volume" to apply the audio changes.
-3. For video routing (using Just Add Power devices):
-   - [Add specific instructions for video routing here]
+1. Navigate to the application URL in your web browser (e.g., `http://your-server.com/JAPcontrols/`).
+2. You will see a list of configured receivers, each with its own control panel.
+3. For each receiver:
+   - Use the dropdown menu to select the desired audio channel.
+   - Use the slider to adjust the volume.
+   - Click the "Set Channel & Volume" button to apply the changes.
+4. The interface will update to reflect the current state of each receiver.
 
-## Customization
+## File Structure
 
-The application uses CSS custom properties (variables) for easy theming. You can modify the following variables in the `<style>` section of `index.php` to change the color scheme:
+- `index.php`: The main entry point of the application. It includes the HTML structure and form handling logic.
+- `config.php`: Contains configuration variables, including the list of receivers and their IP addresses.
+- `utils.php`: Houses utility functions for API communication, form generation, and other helper functions.
+- `app.log`: Log file for tracking application events and errors.
 
-```css
-:root {
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --primary-color: #bb86fc;
-    --secondary-color: #03dac6;
-    --surface-color: #1e1e1e;
-    --error-color: #cf6679;
-}
-```
+## Function Documentation
 
+### makeApiCall($method, $deviceIp, $endpoint, $data = null)
+Handles API calls to the Castle devices.
+- `$method`: HTTP method (GET, POST, etc.)
+- `$deviceIp`: IP address of the target device
+- `$endpoint`: Specific API endpoint
+- `$data`: Optional data for POST requests
 
-## Just Add Power Integration
+### getCurrentVolume($deviceIp)
+Retrieves the current volume setting from a device.
+- `$deviceIp`: IP address of the target device
+- Returns: Integer representing the current volume (0-100)
 
-This system is compatible with Just Add Power HDMI transmitters and receivers, allowing for flexible and scalable video distribution alongside audio control. The integration enables:
+### getCurrentChannel($deviceIp)
+Retrieves the current channel setting from a device.
+- `$deviceIp`: IP address of the target device
+- Returns: Integer representing the current channel
 
-- Routing of HDMI signals from multiple sources to multiple displays
-- Seamless switching between video sources
-- Control of both audio and video through a single interface
+### generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume, $maxVolume, $volumeStep)
+Generates the HTML for a receiver control form.
+- `$receiverName`: Name of the receiver (for display)
+- `$deviceIp`: IP address of the receiver
+- `$maxChannels`: Maximum number of channels
+- `$minVolume`: Minimum volume level
+- `$maxVolume`: Maximum volume level
+- `$volumeStep`: Step size for volume adjustment
+- Returns: HTML string for the receiver form
 
+### sanitizeInput($data, $type, $options = [])
+Sanitizes and validates input data.
+- `$data`: Input data to sanitize
+- `$type`: Type of data ('int' or 'ip')
+- `$options`: Additional validation options
+- Returns: Sanitized data or null if invalid
+
+### logMessage($message, $level = 'info')
+Logs messages to the application log file.
+- `$message`: Message to log
+- `$level`: Log level (e.g., 'error', 'info')
+
+## Troubleshooting
+
+- **Receiver Not Responding**: Ensure the IP address is correct in `config.php` and the device is powered on and connected to the network.
+- **Volume Not Updating**: Check the network connection and verify that the API endpoint for volume control is correct.
+- **Channel Selection Fails**: Confirm that the selected channel is within the range supported by the receiver.
+- **PHP Errors**: Make sure your PHP version meets the minimum requirements and all necessary extensions are enabled.
+
+## Contributing
+
+Contributions to the Castle API Endpoint Tester are welcome! Please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them with clear, descriptive messages.
+4. Push your changes to your fork.
+5. Submit a pull request with a detailed description of your changes.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+For additional support or inquiries, please open an issue on the GitHub repository or contact the project maintainers.
 
 
