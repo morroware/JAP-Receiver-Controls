@@ -7,7 +7,7 @@
  * and adjust volumes for each receiver.
  *
  * @author Your Name
- * @version 1.3
+ * @version 1.4
  */
 
 // Enable error reporting for debugging (remove in production)
@@ -76,6 +76,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            max-width: 200px;
+            height: auto;
         }
 
         h1 {
@@ -260,6 +270,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
             .home-button {
                 width: 80%;
             }
+
+            .logo {
+                max-width: 150px;
+            }
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -296,6 +310,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
     </script>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="logo.png" alt="Castle AV Controls Logo" class="logo">
+    </div>
     <h1>Castle AV Controls</h1>
     <div class="receivers-wrapper">
         <?php
