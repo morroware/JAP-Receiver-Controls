@@ -5,8 +5,8 @@
  * This file contains all the necessary utility functions for interacting with
  * the Castle API, handling errors, logging, and generating HTML forms.
  *
- * @author Your Name
- * @version 2.0
+ * @Seth Morrow
+ * @version 0.01.6
  */
 
 /**
