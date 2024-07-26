@@ -6,8 +6,8 @@
  * in the Castle Bowling and Rink facility. It allows users to select channels
  * and adjust volumes for each receiver.
  *
- * @author Your Name
- * @version 1.4
+ * @Seth Morrow
+ * @version 0.01.6
  */
 
 // Enable error reporting for debugging (remove in production)
