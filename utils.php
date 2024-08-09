@@ -1,16 +1,21 @@
 <?php
 /**
- * Utility functions for the Castle API Endpoint Tester
+ * Utility functions for AV Controls for Just Add Power receivers
  * 
  * This file contains all the necessary utility functions for interacting with
- * the Castle API, handling errors, logging, and generating HTML forms.
+ * Just Add Power 3G devices, handling errors, logging, and generating HTML forms.
  *
- * @Seth Morrow
- * @version 0.01.6
+ * @author Seth Morrow
+ * @version 1.1
+ * @date 2023-08-09
  */
 
 /**
  * Function to handle API calls to the device
+ * 
+ * This function sends HTTP requests to the Castle API endpoints and handles
+ * the responses. It supports both GET and POST methods, and can send data
+ * with different content types.
  * 
  * @param string $method - The HTTP method to be used for the API call (e.g., GET, POST)
  * @param string $deviceIp - The IP address of the device to interact with
@@ -34,7 +39,7 @@ function makeApiCall($method, $deviceIp, $endpoint, $data = null, $contentType =
     }
 
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, API_TIMEOUT);
 
     $result = curl_exec($ch);
 
@@ -55,6 +60,9 @@ function makeApiCall($method, $deviceIp, $endpoint, $data = null, $contentType =
 /**
  * Function to get the current volume setting from a device
  * 
+ * This function retrieves the current volume level from a specified device
+ * by making a GET request to the appropriate API endpoint.
+ * 
  * @param string $deviceIp - The IP address of the device
  * @return int|null - The current volume level, or null if not set or in case of an error
  */
@@ -72,6 +80,9 @@ function getCurrentVolume($deviceIp) {
 /**
  * Function to get the current channel setting from a device
  * 
+ * This function retrieves the current channel number from a specified device
+ * by making a GET request to the appropriate API endpoint.
+ * 
  * @param string $deviceIp - The IP address of the device
  * @return int|null - The current channel number, or null if not set or in case of an error
  */
@@ -88,6 +99,9 @@ function getCurrentChannel($deviceIp) {
 
 /**
  * Function to set the volume on a device
+ * 
+ * This function sets the volume level on a specified device by making a POST
+ * request to the appropriate API endpoint. The volume data is sent as plain text.
  * 
  * @param string $deviceIp - The IP address of the device
  * @param int|string $volume - The volume level to set
@@ -107,6 +121,9 @@ function setVolume($deviceIp, $volume) {
 /**
  * Function to set the channel on a device
  * 
+ * This function sets the channel number on a specified device by making a POST
+ * request to the appropriate API endpoint. The channel data is sent as plain text.
+ * 
  * @param string $deviceIp - The IP address of the device
  * @param int $channel - The channel number to set
  * @return bool - True if successful, false otherwise
@@ -125,6 +142,10 @@ function setChannel($deviceIp, $channel) {
 /**
  * Function to check if a device supports volume control
  * 
+ * This function checks if a specified device supports volume control by
+ * retrieving its model information and comparing it against a list of
+ * known models that support volume control.
+ * 
  * @param string $deviceIp - The IP address of the device
  * @return bool - True if the device supports volume control, false otherwise
  */
@@ -133,8 +154,7 @@ function supportsVolumeControl($deviceIp) {
         $response = makeApiCall('GET', $deviceIp, 'details/device/model');
         $data = json_decode($response, true);
         $model = $data['data'] ?? '';
-        $supportedModels = ['3G+4+ TX', '3G+AVP RX', '3G+AVP TX', '3G+WP4 TX', '2G/3G SX'];
-        return in_array($model, $supportedModels);
+        return in_array($model, VOLUME_CONTROL_MODELS);
     } catch (Exception $e) {
         logMessage('Error checking volume control support: ' . $e->getMessage(), 'error');
         return false;
@@ -143,6 +163,9 @@ function supportsVolumeControl($deviceIp) {
 
 /**
  * Function to sanitize and validate input data
+ * 
+ * This function sanitizes and validates input data based on the specified type.
+ * It supports validation for integers and IP addresses.
  * 
  * @param mixed $data - The input data to sanitize
  * @param string $type - The type of data (e.g., 'int', 'ip')
@@ -171,18 +194,22 @@ function sanitizeInput($data, $type, $options = []) {
 /**
  * Function to log messages
  * 
+ * This function logs messages to a file with a timestamp and specified log level.
+ * 
  * @param string $message - The message to log
  * @param string $level - The log level (e.g., 'error', 'info')
  */
 function logMessage($message, $level = 'info') {
-    $logFile = __DIR__ . '/app.log';
     $timestamp = date('Y-m-d H:i:s');
     $formattedMessage = "[$timestamp] [$level] $message" . PHP_EOL;
-    file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+    file_put_contents(LOG_FILE, $formattedMessage, FILE_APPEND);
 }
 
 /**
  * Function to generate the HTML for a receiver form
+ * 
+ * This function generates the HTML for a single receiver form, including
+ * channel selection and volume control (if supported by the device).
  * 
  * @param string $receiverName - The name of the receiver
  * @param string $deviceIp - The IP address of the receiver
@@ -224,5 +251,3 @@ function generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume
     
     return $html;
 }
-
-?>
