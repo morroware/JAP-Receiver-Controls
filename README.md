@@ -1,142 +1,86 @@
-# JAPcontrols
+# JAP Receiver Controls
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Features](#features)
-3. [Requirements](#requirements)
-4. [Installation](#installation)
-5. [Configuration](#configuration)
-6. [Usage](#usage)
-7. [File Structure](#file-structure)
-8. [Function Documentation](#function-documentation)
-9. [Troubleshooting](#troubleshooting)
-10. [Contributing](#contributing)
-11. [License](#license)
+## Overview
 
-## Introduction
+JAP Receiver Controls is a user-friendly web interface designed to manage and control multiple "Just Add Power" brand AV over IP receivers. This system allows for seamless control of both audio and video settings across various receivers in a network, making it an ideal solution for environments such as conference rooms, educational institutions, or any setting requiring centralized AV management.
 
-Japcontrols is a web-based application designed to interact with and control Just Add Power audio receivers. This tool provides a user-friendly interface for managing multiple audio receivers, allowing users to adjust volume levels and select audio channels for each device. The application communicates with the receivers using a RESTful API, making it easy to integrate with existing audio systems.
-
-This project is particularly useful for any venue where multiple audio zones need to be controlled from a central interface. It offers a simple yet powerful way to manage audio settings across multiple devices simultaneously.
+![JAP Receiver Controls Logo](logo.png)
 
 ## Features
 
-- **Multi-Device Management**: Control multiple Just Add Power audio receivers from a single interface.
-- **Volume Control**: Adjust the volume of each receiver individually.
-- **Channel Selection**: Choose the active audio channel for each receiver.
-- **Real-Time Updates**: The interface reflects the current state of each receiver, including volume levels and active channels.
-- **Error Handling**: Robust error handling ensures the application remains functional even if a device is unresponsive.
-- **Logging**: Comprehensive logging system for tracking operations and troubleshooting.
-- **Security**: Input sanitization to prevent injection attacks and ensure data integrity.
+- **Multi-Receiver Management**: Control multiple "Just Add Power" receivers from a single interface.
+- **Channel Selection**: Easily switch between channels for each receiver.
+- **Volume Control**: Adjust volume levels for compatible receivers.
+- **Responsive Design**: User-friendly interface that works on various devices and screen sizes.
+- **Real-time Updates**: AJAX-powered forms for instant feedback without page reloads.
+- **Error Handling**: Robust error management with user-friendly notifications.
+- **Logging**: Comprehensive logging system for troubleshooting and auditing.
 
-## Requirements
+## System Requirements
 
-- PHP 7.0 or higher
+- PHP 7.4 or higher
 - Web server (e.g., Apache, Nginx)
-- cURL PHP extension enabled
-- Network access to Just Add Power audio receivers
+- Network access to "Just Add Power" receivers
 
 ## Installation
 
-1. Clone this repository to your web server's document root:
+1. Clone the repository to your web server's document root:
    ```
-   git clone https://github.com/morroware/japcontrols.git
-   ```
-
-2. Ensure that the web server has write permissions for the log file:
-   ```
-   chmod 666 /path/to/japcontrols/app.log
+   git clone https://github.com/yourusername/jap-receiver-controls.git
    ```
 
-3. Configure your web server to serve the project directory.
+2. Configure your web server to serve the project directory.
 
-## Configuration
-
-1. Open `config.php` in a text editor.
-2. Modify the `$RECEIVERS` array to include your Just Add Power audio receivers:
+3. Copy `config.php.example` to `config.php` and update the settings:
    ```php
-   $RECEIVERS = array(
-       "Bowling Alley" => "192.168.1.100",
-       "Main Rink" => "192.168.1.101",
-       "Cafe Area" => "192.168.1.102",
-   );
+   const RECEIVERS = [
+       "Rink Music" => "192.168.8.15",
+       "Rink Video" => "192.168.8.22",
+       // Add more receivers as needed
+   ];
+
+   const HOME_URL = 'http://your-home-page-url.com';
    ```
-3. Adjust other configuration variables as needed:
-   ```php
-   $MAX_VOLUME = 100;
-   $MIN_VOLUME = 0;
-   $VOLUME_STEP = 1;
-   $MAX_CHANNELS = 4;
-   ```
+
+4. Ensure the `log` directory is writable by your web server.
+
+5. Access the interface through your web browser.
 
 ## Usage
 
-1. Navigate to the application URL in your web browser (e.g., `http://your-server.com/JAPcontrols/`).
-2. You will see a list of configured receivers, each with its own control panel.
-3. For each receiver:
-   - Use the dropdown menu to select the desired audio channel.
-   - Use the slider to adjust the volume.
-   - Click the "Set Channel & Volume" button to apply the changes.
-4. The interface will update to reflect the current state of each receiver.
+1. **Accessing the Interface**: Navigate to the URL where you've installed the JAP Receiver Controls.
 
-## File Structure
+2. **Controlling Receivers**: 
+   - Each receiver is represented by a card on the interface.
+   - Select the desired channel from the dropdown menu.
+   - Adjust the volume using the slider (if supported by the receiver).
+   - Click "Update" to apply the changes.
 
-- `index.php`: The main entry point of the application. It includes the HTML structure and form handling logic.
-- `config.php`: Contains configuration variables, including the list of receivers and their IP addresses.
-- `utils.php`: Houses utility functions for API communication, form generation, and other helper functions.
-- `app.log`: Log file for tracking application events and errors.
+3. **Viewing Feedback**: After each action, a message will appear at the bottom of the page indicating success or failure.
 
-## Function Documentation
+4. **Returning Home**: Use the "Home" button at the bottom of the page to return to your main control panel or homepage.
 
-### makeApiCall($method, $deviceIp, $endpoint, $data = null)
-Handles API calls to the Castle devices.
-- `$method`: HTTP method (GET, POST, etc.)
-- `$deviceIp`: IP address of the target device
-- `$endpoint`: Specific API endpoint
-- `$data`: Optional data for POST requests
+## Configuration
 
-### getCurrentVolume($deviceIp)
-Retrieves the current volume setting from a device.
-- `$deviceIp`: IP address of the target device
-- Returns: Integer representing the current volume (0-100)
+The `config.php` file contains several important settings:
 
-### getCurrentChannel($deviceIp)
-Retrieves the current channel setting from a device.
-- `$deviceIp`: IP address of the target device
-- Returns: Integer representing the current channel
-
-### generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume, $maxVolume, $volumeStep)
-Generates the HTML for a receiver control form.
-- `$receiverName`: Name of the receiver (for display)
-- `$deviceIp`: IP address of the receiver
-- `$maxChannels`: Maximum number of channels
-- `$minVolume`: Minimum volume level
-- `$maxVolume`: Maximum volume level
-- `$volumeStep`: Step size for volume adjustment
-- Returns: HTML string for the receiver form
-
-### sanitizeInput($data, $type, $options = [])
-Sanitizes and validates input data.
-- `$data`: Input data to sanitize
-- `$type`: Type of data ('int' or 'ip')
-- `$options`: Additional validation options
-- Returns: Sanitized data or null if invalid
-
-### logMessage($message, $level = 'info')
-Logs messages to the application log file.
-- `$message`: Message to log
-- `$level`: Log level (e.g., 'error', 'info')
+- `RECEIVERS`: An array of receiver names and their IP addresses.
+- `MAX_VOLUME` and `MIN_VOLUME`: Set the volume range for receivers.
+- `MAX_CHANNELS`: The maximum number of channels available.
+- `HOME_URL`: The URL of your home page or main control panel.
+- `LOG_FILE` and `LOG_LEVEL`: Configure logging behavior.
+- `API_TIMEOUT`: Set the timeout for API calls to receivers.
+- `VOLUME_CONTROL_MODELS`: List of receiver models that support volume control.
 
 ## Troubleshooting
 
-- **Receiver Not Responding**: Ensure the IP address is correct in `config.php` and the device is powered on and connected to the network.
-- **Volume Not Updating**: Check the network connection and verify that the API endpoint for volume control is correct.
-- **Channel Selection Fails**: Confirm that the selected channel is within the range supported by the receiver.
-- **PHP Errors**: Make sure your PHP version meets the minimum requirements and all necessary extensions are enabled.
+- **Receiver Not Responding**: Ensure the IP address is correct in `config.php` and the receiver is powered on and connected to the network.
+- **Volume Control Not Available**: Check if the receiver model is listed in the `VOLUME_CONTROL_MODELS` array in `config.php`.
+- **Error Messages**: Check the log file specified in `config.php` for detailed error information.
 
 ## Contributing
 
-Contributions to the Castle API Endpoint Tester are welcome! Please follow these steps:
+Contributions to the JAP Receiver Controls project are welcome! Please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.
@@ -144,5 +88,19 @@ Contributions to the Castle API Endpoint Tester are welcome! Please follow these
 4. Push your changes to your fork.
 5. Submit a pull request with a detailed description of your changes.
 
+## License
 
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
+## Acknowledgments
+
+- Just Add Power for their AV over IP technology
+- The open-source community for inspiration and resources
+
+## Support
+
+For support, please open an issue on the GitHub repository or contact the maintainer at support@example.com.
+
+---
+
+Developed with ❤️ by Seth Morrow
