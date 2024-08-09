@@ -1,12 +1,12 @@
 <?php
 /**
- * Castle API Endpoint Tester FINAL - Main Script
+ * AV Controls for Just Add Power receivers - Main Script
  * 
- * This script handles the main logic for the Castle API Endpoint Tester,
+ * This script handles the main logic for the AVcontrols project,
  * including form submission processing and rendering the user interface.
  *
  * @author Seth Morrow
- * @version 1.0.0
+ * @version 1.1
  * @date 2023-08-09
  */
 
