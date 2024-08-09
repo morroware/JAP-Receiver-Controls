@@ -224,6 +224,13 @@ input[type="range"]::-moz-range-thumb {
     padding: 15px;
 }
 
+.receiver .error-message {
+    color: var(--error-color);
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+}
+
 /* Styles for global error message */
 .global-error {
     background-color: var(--error-color);

@@ -1,12 +1,12 @@
 <?php
 /**
- * Configuration file for the Castle API Endpoint Tester FINAL
+ * Configuration file - AV Controls for Just Add Power receivers
  * 
  * This file contains the list of receivers and their corresponding IP addresses,
  * as well as global configuration settings for the application.
  *
  * @author Seth Morrow
- * @version 1.0.0
+ * @version 1.0.1
  * @date 2023-08-09
  */
 
@@ -27,7 +27,6 @@ const MAX_CHANNELS = 4; // Maximum number of channels available
 const HOME_URL = 'http://192.168.8.127';
 
 // Logging configuration
-const LOG_FILE = __DIR__ . '/app.log';  // Log file location
 const LOG_LEVEL = 'info'; // Options: debug, info, warning, error
 
 // API call timeout in seconds

@@ -6,7 +6,7 @@
  * Just Add Power 3G devices, handling errors, logging, and generating HTML forms.
  *
  * @author Seth Morrow
- * @version 1.1
+ * @version 1.3
  * @date 2023-08-09
  */
 
@@ -194,15 +194,15 @@ function sanitizeInput($data, $type, $options = []) {
 /**
  * Function to log messages
  * 
- * This function logs messages to a file with a timestamp and specified log level.
+ * This function logs messages using PHP's built-in error_log function.
  * 
  * @param string $message - The message to log
  * @param string $level - The log level (e.g., 'error', 'info')
  */
 function logMessage($message, $level = 'info') {
     $timestamp = date('Y-m-d H:i:s');
-    $formattedMessage = "[$timestamp] [$level] $message" . PHP_EOL;
-    file_put_contents(LOG_FILE, $formattedMessage, FILE_APPEND);
+    $formattedMessage = "[$timestamp] [$level] $message";
+    error_log($formattedMessage);
 }
 
 /**
@@ -210,6 +210,7 @@ function logMessage($message, $level = 'info') {
  * 
  * This function generates the HTML for a single receiver form, including
  * channel selection and volume control (if supported by the device).
+ * If there's an error connecting to the receiver, it displays a specific error message.
  * 
  * @param string $receiverName - The name of the receiver
  * @param string $deviceIp - The IP address of the receiver
@@ -220,34 +221,45 @@ function logMessage($message, $level = 'info') {
  * @return string - The HTML for the receiver form
  */
 function generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume, $maxVolume, $volumeStep) {
-    $currentChannel = getCurrentChannel($deviceIp) ?? 1;
-    $supportsVolume = supportsVolumeControl($deviceIp);
-    
-    $html = "<div class='receiver'>";
-    $html .= "<form method='POST'>";
-    $html .= "<button type='button' class='receiver-title'>" . htmlspecialchars($receiverName) . "</button>";
-    
-    $html .= "<label for='channel_" . htmlspecialchars($receiverName) . "'>Channel:</label>";
-    $html .= "<select id='channel_" . htmlspecialchars($receiverName) . "' name='channel'>";
-    for ($channel = 1; $channel <= $maxChannels; $channel++) {
-        $selected = ($channel == $currentChannel) ? ' selected' : '';
-        $html .= "<option value='$channel'$selected>Channel $channel</option>";
+    try {
+        $currentChannel = getCurrentChannel($deviceIp);
+        if ($currentChannel === null) {
+            throw new Exception("Unable to get current channel");
+        }
+        $supportsVolume = supportsVolumeControl($deviceIp);
+        
+        $html = "<div class='receiver'>";
+        $html .= "<form method='POST'>";
+        $html .= "<button type='button' class='receiver-title'>" . htmlspecialchars($receiverName) . "</button>";
+        
+        $html .= "<label for='channel_" . htmlspecialchars($receiverName) . "'>Channel:</label>";
+        $html .= "<select id='channel_" . htmlspecialchars($receiverName) . "' name='channel'>";
+        for ($channel = 1; $channel <= $maxChannels; $channel++) {
+            $selected = ($channel == $currentChannel) ? ' selected' : '';
+            $html .= "<option value='$channel'$selected>Channel $channel</option>";
+        }
+        $html .= "</select>";
+        
+        if ($supportsVolume) {
+            $currentVolume = getCurrentVolume($deviceIp) ?? $minVolume;
+            $html .= "<label for='volume_" . htmlspecialchars($receiverName) . "'>Volume:</label>";
+            $html .= "<input type='range' id='volume_" . htmlspecialchars($receiverName) . "' name='volume' min='$minVolume' max='$maxVolume' step='$volumeStep' value='$currentVolume' oninput='updateVolumeLabel(this)'>";
+            $html .= "<span class='volume-label'>$currentVolume</span>";
+        } else {
+            $html .= "<p class='warning'>Volume control is not supported for this device.</p>";
+        }
+        
+        $html .= "<input type='hidden' name='receiver_ip' value='" . htmlspecialchars($deviceIp) . "'>";
+        $html .= "<button type='submit'>Update</button>";
+        $html .= "</form>";
+        $html .= "</div>";
+    } catch (Exception $e) {
+        logMessage("Error generating form for receiver {$receiverName}: " . $e->getMessage(), 'error');
+        $html = "<div class='receiver error'>";
+        $html .= "<h2>" . htmlspecialchars($receiverName) . "</h2>";
+        $html .= "<p class='error-message'>Unable to reach " . htmlspecialchars($receiverName) . " (" . htmlspecialchars($deviceIp) . "). Please check that it is powered on and connected to the network.</p>";
+        $html .= "</div>";
     }
-    $html .= "</select>";
-    
-    if ($supportsVolume) {
-        $currentVolume = getCurrentVolume($deviceIp) ?? $minVolume;
-        $html .= "<label for='volume_" . htmlspecialchars($receiverName) . "'>Volume:</label>";
-        $html .= "<input type='range' id='volume_" . htmlspecialchars($receiverName) . "' name='volume' min='$minVolume' max='$maxVolume' step='$volumeStep' value='$currentVolume' oninput='updateVolumeLabel(this)'>";
-        $html .= "<span class='volume-label'>$currentVolume</span>";
-    } else {
-        $html .= "<p class='warning'>Volume control is not supported for this device.</p>";
-    }
-    
-    $html .= "<input type='hidden' name='receiver_ip' value='" . htmlspecialchars($deviceIp) . "'>";
-    $html .= "<button type='submit'>Update</button>";
-    $html .= "</form>";
-    $html .= "</div>";
     
     return $html;
 }
