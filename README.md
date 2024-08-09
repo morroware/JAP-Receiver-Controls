@@ -4,7 +4,7 @@
 
 JAP Receiver Controls is a user-friendly web interface designed to manage and control multiple "Just Add Power" brand AV over IP receivers. This system allows for seamless control of both audio and video settings across various receivers in a network, making it an ideal solution for environments such as conference rooms, educational institutions, or any setting requiring centralized AV management.
 
-![JAP Receiver Controls Logo](logo.png)
+![JAP Receiver Controls Logo](AV.png)
 
 ## Features
 
