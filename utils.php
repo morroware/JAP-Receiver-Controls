@@ -6,8 +6,8 @@
  * Just Add Power 3G devices, handling errors, logging, and generating HTML forms.
  *
  * @author Seth Morrow
- * @version 1.3
- * @date 2023-08-09
+ * @version 1.4
+ * @date 2023-08-14
  */
 
 /**
@@ -209,18 +209,18 @@ function logMessage($message, $level = 'info') {
  * Function to generate the HTML for a receiver form
  * 
  * This function generates the HTML for a single receiver form, including
- * channel selection and volume control (if supported by the device).
- * If there's an error connecting to the receiver, it displays a specific error message.
+ * channel selection (based on the TRANSMITTERS constant) and volume control 
+ * (if supported by the device). If there's an error connecting to the receiver, 
+ * it displays a specific error message.
  * 
  * @param string $receiverName - The name of the receiver
  * @param string $deviceIp - The IP address of the receiver
- * @param int $maxChannels - The maximum number of channels
  * @param int $minVolume - The minimum volume level
  * @param int $maxVolume - The maximum volume level
  * @param int $volumeStep - The step size for the volume slider
  * @return string - The HTML for the receiver form
  */
-function generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume, $maxVolume, $volumeStep) {
+function generateReceiverForm($receiverName, $deviceIp, $minVolume, $maxVolume, $volumeStep) {
     try {
         $currentChannel = getCurrentChannel($deviceIp);
         if ($currentChannel === null) {
@@ -232,14 +232,16 @@ function generateReceiverForm($receiverName, $deviceIp, $maxChannels, $minVolume
         $html .= "<form method='POST'>";
         $html .= "<button type='button' class='receiver-title'>" . htmlspecialchars($receiverName) . "</button>";
         
+        // Generate channel selection dropdown
         $html .= "<label for='channel_" . htmlspecialchars($receiverName) . "'>Channel:</label>";
         $html .= "<select id='channel_" . htmlspecialchars($receiverName) . "' name='channel'>";
-        for ($channel = 1; $channel <= $maxChannels; $channel++) {
-            $selected = ($channel == $currentChannel) ? ' selected' : '';
-            $html .= "<option value='$channel'$selected>Channel $channel</option>";
+        foreach (TRANSMITTERS as $transmitterName => $channelNumber) {
+            $selected = ($channelNumber == $currentChannel) ? ' selected' : '';
+            $html .= "<option value='$channelNumber'$selected>" . htmlspecialchars($transmitterName) . "</option>";
         }
         $html .= "</select>";
         
+        // Generate volume control if supported
         if ($supportsVolume) {
             $currentVolume = getCurrentVolume($deviceIp) ?? $minVolume;
             $html .= "<label for='volume_" . htmlspecialchars($receiverName) . "'>Volume:</label>";
