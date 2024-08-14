@@ -6,8 +6,8 @@
  * including form submission processing and rendering the user interface.
  *
  * @author Seth Morrow
- * @version 1.1
- * @date 2023-08-09
+ * @version 1.2
+ * @date 2023-08-14
  */
 
 // Enable error reporting for debugging (remove in production)
@@ -33,7 +33,7 @@ include __DIR__ . '/template.html';
 function handleAjaxSubmission() {
     $response = array('success' => false, 'message' => '');
 
-    $selectedChannel = sanitizeInput($_POST['channel'], 'int', ['min' => 1, 'max' => MAX_CHANNELS]);
+    $selectedChannel = sanitizeInput($_POST['channel'], 'int');
     $deviceIp = sanitizeInput($_POST['receiver_ip'], 'ip');
 
     if ($selectedChannel && $deviceIp) {
@@ -72,7 +72,7 @@ function generateReceiverForms() {
     $html = '';
     foreach (RECEIVERS as $receiverName => $deviceIp) {
         try {
-            $html .= generateReceiverForm($receiverName, $deviceIp, MAX_CHANNELS, MIN_VOLUME, MAX_VOLUME, VOLUME_STEP);
+            $html .= generateReceiverForm($receiverName, $deviceIp, MIN_VOLUME, MAX_VOLUME, VOLUME_STEP);
         } catch (Exception $e) {
             $html .= "<div class='receiver'><p class='warning'>Error generating form for " . htmlspecialchars($receiverName) . ": " . htmlspecialchars($e->getMessage()) . "</p></div>";
             logMessage("Error generating form for {$receiverName}: " . $e->getMessage(), 'error');
