@@ -3,11 +3,12 @@
  * Configuration file - AV Controls for Just Add Power receivers
  * 
  * This file contains the list of receivers and their corresponding IP addresses,
- * as well as global configuration settings for the application.
+ * transmitters and their channel numbers, as well as global configuration settings 
+ * for the application.
  *
  * @author Seth Morrow
- * @version 1.0.1
- * @date 2023-08-09
+ * @version 1.1.0
+ * @date 2023-08-14
  */
 
 // Array of receivers with their names as keys and IP addresses as values
@@ -17,11 +18,23 @@ const RECEIVERS = [
     "Rink Video" => "192.168.8.22",
 ];
 
+// Array of transmitters with their names as keys and channel numbers as values
+// Add, remove, or modify transmitters here as needed
+// This new constant replaces the previous MAX_CHANNELS constant
+const TRANSMITTERS = [
+    "APPLE TV" => "7",
+    "CABLE BOX 1" => "2",
+    "Unifi Signage" => "5",
+    "RockBot Audio" => "1",
+    // Add more transmitters as needed, e.g.:
+    // "ROKU" => "3",
+    // "PLAYSTATION" => "4",
+];
+
 // Global configuration settings
 const MAX_VOLUME = 11;  // Maximum volume level for the devices
 const MIN_VOLUME = 1;   // Minimum volume level for the devices
 const VOLUME_STEP = 1;  // Step size for volume control slider
-const MAX_CHANNELS = 4; // Maximum number of channels available
 
 // Home page URL - modify this if the home page location changes
 const HOME_URL = 'http://192.168.8.127';
