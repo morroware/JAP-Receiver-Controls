@@ -29,18 +29,24 @@ include __DIR__ . '/template.html';
 
 /**
  * Handle AJAX form submission
+ * 
+ * This function processes the AJAX POST request, updates the channel and volume settings,
+ * and returns a JSON response indicating the success or failure of the operation.
  */
 function handleAjaxSubmission() {
     $response = array('success' => false, 'message' => '');
-
+    
+    // Sanitize and validate input data
     $selectedChannel = sanitizeInput($_POST['channel'], 'int');
     $deviceIp = sanitizeInput($_POST['receiver_ip'], 'ip');
-
+    
     if ($selectedChannel && $deviceIp) {
         try {
+            // Set the channel
             $channelResponse = setChannel($deviceIp, $selectedChannel);
             $response['message'] .= "Channel: " . ($channelResponse ? "Successfully updated" : "Update failed") . "\n";
-
+            
+            // Set the volume if the device supports volume control
             if (supportsVolumeControl($deviceIp)) {
                 $selectedVolume = sanitizeInput($_POST['volume'], 'int', ['min' => MIN_VOLUME, 'max' => MAX_VOLUME]);
                 if ($selectedVolume) {
@@ -48,7 +54,7 @@ function handleAjaxSubmission() {
                     $response['message'] .= "Volume: " . ($volumeResponse ? "Successfully updated" : "Update failed") . "\n";
                 }
             }
-
+            
             $response['success'] = true;
         } catch (Exception $e) {
             $response['message'] = "Error: " . $e->getMessage();
@@ -58,7 +64,8 @@ function handleAjaxSubmission() {
         $response['message'] = "Invalid input data.";
         logMessage("Invalid input data received in POST request", 'error');
     }
-
+    
+    // Send JSON response
     header('Content-Type: application/json');
     echo json_encode($response);
 }
@@ -66,6 +73,8 @@ function handleAjaxSubmission() {
 /**
  * Generate receiver forms HTML
  *
+ * This function generates HTML forms for all configured receivers.
+ * 
  * @return string The HTML for all receiver forms
  */
 function generateReceiverForms() {
