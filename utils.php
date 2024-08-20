@@ -6,16 +6,12 @@
  * Just Add Power 3G devices, handling errors, logging, and generating HTML forms.
  *
  * @author Seth Morrow
- * @version 1.4
- * @date 2023-08-14
+ * @version 1.5
+ * @date 2023-08-15
  */
 
 /**
  * Function to handle API calls to the device
- * 
- * This function sends HTTP requests to the Castle API endpoints and handles
- * the responses. It supports both GET and POST methods, and can send data
- * with different content types.
  * 
  * @param string $method - The HTTP method to be used for the API call (e.g., GET, POST)
  * @param string $deviceIp - The IP address of the device to interact with
@@ -60,9 +56,6 @@ function makeApiCall($method, $deviceIp, $endpoint, $data = null, $contentType =
 /**
  * Function to get the current volume setting from a device
  * 
- * This function retrieves the current volume level from a specified device
- * by making a GET request to the appropriate API endpoint.
- * 
  * @param string $deviceIp - The IP address of the device
  * @return int|null - The current volume level, or null if not set or in case of an error
  */
@@ -80,9 +73,6 @@ function getCurrentVolume($deviceIp) {
 /**
  * Function to get the current channel setting from a device
  * 
- * This function retrieves the current channel number from a specified device
- * by making a GET request to the appropriate API endpoint.
- * 
  * @param string $deviceIp - The IP address of the device
  * @return int|null - The current channel number, or null if not set or in case of an error
  */
@@ -99,9 +89,6 @@ function getCurrentChannel($deviceIp) {
 
 /**
  * Function to set the volume on a device
- * 
- * This function sets the volume level on a specified device by making a POST
- * request to the appropriate API endpoint. The volume data is sent as plain text.
  * 
  * @param string $deviceIp - The IP address of the device
  * @param int|string $volume - The volume level to set
@@ -121,9 +108,6 @@ function setVolume($deviceIp, $volume) {
 /**
  * Function to set the channel on a device
  * 
- * This function sets the channel number on a specified device by making a POST
- * request to the appropriate API endpoint. The channel data is sent as plain text.
- * 
  * @param string $deviceIp - The IP address of the device
  * @param int $channel - The channel number to set
  * @return bool - True if successful, false otherwise
@@ -142,10 +126,6 @@ function setChannel($deviceIp, $channel) {
 /**
  * Function to check if a device supports volume control
  * 
- * This function checks if a specified device supports volume control by
- * retrieving its model information and comparing it against a list of
- * known models that support volume control.
- * 
  * @param string $deviceIp - The IP address of the device
  * @return bool - True if the device supports volume control, false otherwise
  */
@@ -163,9 +143,6 @@ function supportsVolumeControl($deviceIp) {
 
 /**
  * Function to sanitize and validate input data
- * 
- * This function sanitizes and validates input data based on the specified type.
- * It supports validation for integers and IP addresses.
  * 
  * @param mixed $data - The input data to sanitize
  * @param string $type - The type of data (e.g., 'int', 'ip')
@@ -194,8 +171,6 @@ function sanitizeInput($data, $type, $options = []) {
 /**
  * Function to log messages
  * 
- * This function logs messages using PHP's built-in error_log function.
- * 
  * @param string $message - The message to log
  * @param string $level - The log level (e.g., 'error', 'info')
  */
@@ -207,11 +182,6 @@ function logMessage($message, $level = 'info') {
 
 /**
  * Function to generate the HTML for a receiver form
- * 
- * This function generates the HTML for a single receiver form, including
- * channel selection (based on the TRANSMITTERS constant) and volume control 
- * (if supported by the device). If there's an error connecting to the receiver, 
- * it displays a specific error message.
  * 
  * @param string $receiverName - The name of the receiver
  * @param string $deviceIp - The IP address of the receiver
@@ -243,7 +213,10 @@ function generateReceiverForm($receiverName, $deviceIp, $minVolume, $maxVolume, 
         
         // Generate volume control if supported
         if ($supportsVolume) {
-            $currentVolume = getCurrentVolume($deviceIp) ?? $minVolume;
+            $currentVolume = getCurrentVolume($deviceIp);
+            if ($currentVolume === null) {
+                $currentVolume = $minVolume;
+            }
             $html .= "<label for='volume_" . htmlspecialchars($receiverName) . "'>Volume:</label>";
             $html .= "<input type='range' id='volume_" . htmlspecialchars($receiverName) . "' name='volume' min='$minVolume' max='$maxVolume' step='$volumeStep' value='$currentVolume' oninput='updateVolumeLabel(this)'>";
             $html .= "<span class='volume-label'>$currentVolume</span>";
